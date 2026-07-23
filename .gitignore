@@ -1,0 +1,48 @@
+# ---------- Environment / secrets ----------
+.env
+.env.*
+!.env.example
+
+# ---------- Python ----------
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+.venv/
+build/
+dist/
+*.egg-info/
+.eggs/
+pip-wheel-metadata/
+
+# ---------- Uploaded / generated data ----------
+pdfs/
+*.pdf
+!sample.pdf
+
+# ---------- Logs ----------
+*.log
+logs/
+
+# ---------- OS / editor cruft ----------
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+
+# ---------- Jupyter (if used for testing) ----------
+.ipynb_checkpoints/
+
+# ---------- Testing / coverage ----------
+.pytest_cache/
+.coverage
+htmlcov/
+
+# ---------- Misc ----------
+*.bak
+*.tmp

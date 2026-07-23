@@ -1,0 +1,1136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Whiskers — Cat Agent Chat</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#FBF6EC;
+    --paper-dim:#F3ECDE;
+    --ink:#2C2620;
+    --ink-soft:#6E6255;
+    --marmalade:#E58B3A;
+    --marmalade-dark:#C96F26;
+    --sage:#7C9885;
+    --plum:#5B4568;
+    --line:#E4D9C4;
+    --white:#FFFDF9;
+    --radius:16px;
+    --shadow: 0 2px 10px rgba(44,38,32,0.06);
+  }
+  *{box-sizing:border-box;}
+  html,body{height:100%;}
+  body{
+    margin:0;
+    font-family:'Inter',sans-serif;
+    background:var(--paper);
+    color:var(--ink);
+    display:flex;
+    height:100vh;
+    overflow:hidden;
+  }
+
+  /* ---------- Sidebar ---------- */
+  .sidebar{
+    width:300px;
+    min-width:300px;
+    background:var(--paper-dim);
+    border-right:1px solid var(--line);
+    display:flex;
+    flex-direction:column;
+    height:100%;
+  }
+  .brand{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    padding:20px 20px 16px 20px;
+  }
+  .brand-mark{
+    width:38px;height:38px;
+    flex-shrink:0;
+  }
+  .brand-text{
+    font-family:'Baloo 2',sans-serif;
+    font-weight:800;
+    font-size:20px;
+    letter-spacing:0.2px;
+    color:var(--ink);
+  }
+  .brand-sub{
+    font-size:11px;
+    color:var(--ink-soft);
+    margin-top:-2px;
+    font-weight:500;
+  }
+
+  .new-chat-btn{
+    margin:4px 16px 14px 16px;
+    background:var(--marmalade);
+    color:var(--white);
+    border:none;
+    border-radius:12px;
+    padding:11px 14px;
+    font-family:'Inter',sans-serif;
+    font-weight:600;
+    font-size:14px;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+    box-shadow:var(--shadow);
+    transition:transform .15s ease, background .15s ease;
+  }
+  .new-chat-btn:hover{ background:var(--marmalade-dark); transform:translateY(-1px);}
+  .new-chat-btn:active{ transform:translateY(0); }
+
+  .sidebar-scroll{
+    flex:1;
+    overflow-y:auto;
+    padding:0 12px 12px 12px;
+  }
+  .sidebar-scroll::-webkit-scrollbar{ width:6px; }
+  .sidebar-scroll::-webkit-scrollbar-thumb{ background:#DCCFB4; border-radius:4px; }
+
+  .section-label{
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:0.09em;
+    color:var(--ink-soft);
+    font-weight:700;
+    padding:14px 10px 8px 10px;
+  }
+
+  .chat-item{
+    display:flex;
+    align-items:flex-start;
+    gap:10px;
+    padding:10px 10px;
+    border-radius:10px;
+    cursor:pointer;
+    position:relative;
+    transition:background .12s ease;
+  }
+  .chat-item:hover{ background:#EFE4CE; }
+  .chat-item.active{ background:var(--white); box-shadow:var(--shadow); }
+  .chat-item.active::before{
+    content:"";
+    position:absolute;
+    left:-12px; top:10px; bottom:10px;
+    width:4px;
+    background:var(--marmalade);
+    border-radius:4px;
+  }
+  .paw{
+    width:22px;height:22px;
+    flex-shrink:0;
+    margin-top:2px;
+    opacity:0.75;
+  }
+  .chat-item.active .paw{ opacity:1; }
+  .chat-meta{ min-width:0; flex:1; }
+  .chat-title{
+    font-size:13.5px;
+    font-weight:600;
+    color:var(--ink);
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+  .chat-preview{
+    font-size:12px;
+    color:var(--ink-soft);
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    margin-top:1px;
+  }
+
+  /* PDFs */
+  .pdf-item{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    padding:9px 10px;
+    border-radius:10px;
+    cursor:pointer;
+    transition:background .12s ease;
+  }
+  .pdf-item:hover{ background:#EFE4CE; }
+  .pdf-icon{
+    width:32px;height:32px;
+    flex-shrink:0;
+    border-radius:8px;
+    background:linear-gradient(155deg,var(--plum),#6E5580);
+    display:flex;align-items:center;justify-content:center;
+    color:var(--white);
+    font-family:'JetBrains Mono',monospace;
+    font-size:9px;
+    font-weight:700;
+    box-shadow:var(--shadow);
+  }
+  .pdf-meta{ min-width:0; flex:1; }
+  .pdf-name{
+    font-size:13px;
+    font-weight:600;
+    color:var(--ink);
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+  .pdf-sub{
+    font-size:11px;
+    color:var(--ink-soft);
+  }
+  .pdf-upload-btn{
+    margin:8px 10px 4px 10px;
+    border:1.5px dashed #CBBB98;
+    background:transparent;
+    color:var(--ink-soft);
+    border-radius:10px;
+    padding:9px;
+    font-size:12.5px;
+    font-weight:600;
+    font-family:'Inter',sans-serif;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:6px;
+    transition:border-color .15s ease, color .15s ease;
+  }
+  .pdf-upload-btn:hover{ border-color:var(--sage); color:var(--sage); }
+  .pdf-upload-btn:disabled{ opacity:.5; cursor:default; }
+
+  .section-row{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:14px 4px 8px 10px;
+  }
+  .section-row .section-label{ padding:0; }
+  .refresh-btn{
+    width:24px;height:24px;
+    border:none;
+    background:transparent;
+    color:var(--ink-soft);
+    display:flex;align-items:center;justify-content:center;
+    cursor:pointer;
+    border-radius:6px;
+    margin-right:6px;
+    transition:background .15s ease, color .15s ease;
+  }
+  .refresh-btn:hover{ background:#EAE0C8; color:var(--marmalade-dark); }
+  .refresh-btn.spinning svg{ animation:spin .7s linear infinite; }
+  @keyframes spin{ to{ transform:rotate(360deg); } }
+
+  .pdf-status{
+    font-size:11px;
+    color:var(--ink-soft);
+    padding:2px 10px 6px 10px;
+  }
+  .pdf-status.error{ color:#B4482C; }
+
+  .sidebar-footer{
+    padding:14px 18px;
+    border-top:1px solid var(--line);
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+  .settings-btn{
+    margin-left:auto;
+    width:32px;height:32px;
+    border-radius:8px;
+    border:none;
+    background:transparent;
+    color:var(--ink-soft);
+    display:flex;align-items:center;justify-content:center;
+    cursor:pointer;
+    transition:background .15s ease, color .15s ease;
+  }
+  .settings-btn:hover{ background:#EAE0C8; color:var(--ink); }
+
+  /* ---------- Settings modal ---------- */
+  .modal-overlay{
+    position:fixed; inset:0;
+    background:rgba(44,38,32,0.35);
+    display:none;
+    align-items:center;
+    justify-content:center;
+    z-index:50;
+  }
+  .modal-overlay.open{ display:flex; }
+  .modal{
+    background:var(--white);
+    border-radius:18px;
+    width:400px;
+    max-width:90vw;
+    padding:24px;
+    box-shadow:0 12px 40px rgba(44,38,32,0.25);
+  }
+  .modal h3{
+    font-family:'Baloo 2',sans-serif;
+    margin:0 0 4px 0;
+    font-size:19px;
+  }
+  .modal p.sub{
+    margin:0 0 18px 0;
+    font-size:12.5px;
+    color:var(--ink-soft);
+  }
+  .field-label{
+    font-size:12px;
+    font-weight:600;
+    color:var(--ink);
+    margin-bottom:6px;
+    display:block;
+  }
+  .field-input{
+    width:100%;
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:9px 12px;
+    font-family:'JetBrains Mono',monospace;
+    font-size:12.5px;
+    outline:none;
+    margin-bottom:18px;
+    background:var(--paper-dim);
+    color:var(--ink);
+  }
+  .field-input:focus{ border-color:var(--marmalade); }
+
+  .field-row{
+    display:flex;
+    gap:8px;
+    margin-bottom:8px;
+  }
+  .field-row .field-input{ margin-bottom:0; }
+  .test-btn{
+    flex-shrink:0;
+    border:1px solid var(--line);
+    background:var(--paper-dim);
+    color:var(--ink);
+    border-radius:10px;
+    padding:0 14px;
+    font-size:12.5px;
+    font-weight:600;
+    cursor:pointer;
+    transition:background .15s ease;
+  }
+  .test-btn:hover{ background:#EAE0C8; }
+  .test-btn:disabled{ opacity:.55; cursor:default; }
+
+  .conn-status{
+    display:flex;
+    align-items:center;
+    gap:7px;
+    font-size:12px;
+    font-weight:600;
+    margin-bottom:18px;
+    min-height:16px;
+  }
+  .conn-dot{
+    width:8px;height:8px;
+    border-radius:50%;
+    background:#B8AC94;
+    flex-shrink:0;
+  }
+  .conn-status.idle .conn-dot{ background:#B8AC94; }
+  .conn-status.idle{ color:var(--ink-soft); font-weight:500; }
+  .conn-status.testing .conn-dot{ background:#D9A441; animation:pulse 1s infinite; }
+  .conn-status.testing{ color:#A9832C; }
+  .conn-status.connected .conn-dot{ background:var(--sage); box-shadow:0 0 0 3px rgba(124,152,133,0.2); }
+  .conn-status.connected{ color:#4B6B54; }
+  .conn-status.error .conn-dot{ background:#C0503A; }
+  .conn-status.error{ color:#B4482C; }
+  @keyframes pulse{ 0%,100%{ opacity:1; } 50%{ opacity:.35; } }
+  .modal-divider{
+    height:1px;
+    background:var(--line);
+    margin:4px 0 16px 0;
+  }
+  .danger-row{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+  }
+  .danger-text{ font-size:12.5px; color:var(--ink-soft); }
+  .danger-btn{
+    background:#F4E3DC;
+    color:#B4482C;
+    border:none;
+    border-radius:9px;
+    padding:8px 13px;
+    font-weight:600;
+    font-size:12.5px;
+    cursor:pointer;
+    white-space:nowrap;
+    transition:background .15s ease;
+  }
+  .danger-btn:hover{ background:#EBCFC3; }
+  .modal-actions{
+    display:flex;
+    justify-content:flex-end;
+    gap:8px;
+    margin-top:20px;
+  }
+  .modal-btn{
+    border:none;
+    border-radius:10px;
+    padding:9px 16px;
+    font-weight:600;
+    font-size:13px;
+    cursor:pointer;
+  }
+  .modal-btn.ghost{ background:var(--paper-dim); color:var(--ink); }
+  .modal-btn.ghost:hover{ background:#EAE0C8; }
+  .modal-btn.primary{ background:var(--marmalade); color:var(--white); }
+  .modal-btn.primary:hover{ background:var(--marmalade-dark); }
+
+  .toast{
+    position:fixed;
+    bottom:22px; left:50%;
+    transform:translateX(-50%) translateY(20px);
+    background:var(--ink);
+    color:var(--white);
+    padding:10px 18px;
+    border-radius:10px;
+    font-size:13px;
+    font-weight:500;
+    opacity:0;
+    pointer-events:none;
+    transition:opacity .2s ease, transform .2s ease;
+    z-index:100;
+  }
+  .toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
+  .user-avatar{
+    width:32px;height:32px;
+    border-radius:50%;
+    background:var(--sage);
+    color:var(--white);
+    display:flex;align-items:center;justify-content:center;
+    font-weight:700;
+    font-size:13px;
+    font-family:'Baloo 2',sans-serif;
+  }
+  .user-name{ font-size:13px; font-weight:600; }
+  .user-plan{ font-size:11px; color:var(--ink-soft); }
+
+  /* ---------- Main chat ---------- */
+  .main{
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    height:100%;
+    min-width:0;
+  }
+  .chat-header{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    padding:16px 28px;
+    border-bottom:1px solid var(--line);
+    background:var(--paper);
+  }
+  .agent-avatar{
+    width:40px;height:40px;
+    border-radius:12px;
+    background:linear-gradient(155deg, var(--marmalade), #F2AE63);
+    display:flex;align-items:center;justify-content:center;
+    box-shadow:var(--shadow);
+  }
+  .agent-name{ font-family:'Baloo 2',sans-serif; font-weight:700; font-size:16px; }
+  .agent-status{
+    font-size:12px;
+    color:var(--sage);
+    display:flex;
+    align-items:center;
+    gap:5px;
+    font-weight:500;
+  }
+  .status-dot{
+    width:7px;height:7px;
+    border-radius:50%;
+    background:var(--sage);
+    box-shadow:0 0 0 3px rgba(124,152,133,0.18);
+  }
+
+  .messages{
+    flex:1;
+    overflow-y:auto;
+    padding:26px 10%;
+    display:flex;
+    flex-direction:column;
+    gap:20px;
+  }
+  .messages::-webkit-scrollbar{ width:8px; }
+  .messages::-webkit-scrollbar-thumb{ background:#E4D9C4; border-radius:4px; }
+
+  .msg-row{ display:flex; gap:12px; max-width:100%; }
+  .msg-row.user{ flex-direction:row-reverse; }
+  .msg-avatar{
+    width:32px;height:32px;
+    border-radius:10px;
+    flex-shrink:0;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .msg-avatar.agent{ background:linear-gradient(155deg, var(--marmalade), #F2AE63); }
+  .msg-avatar.user{ background:var(--sage); color:var(--white); font-family:'Baloo 2'; font-weight:700; font-size:12px; }
+
+  .bubble-wrap{ max-width:62%; display:flex; flex-direction:column; gap:4px; }
+  .msg-row.user .bubble-wrap{ align-items:flex-end; }
+  .bubble{
+    padding:12px 16px;
+    border-radius:16px;
+    font-size:14.5px;
+    line-height:1.55;
+  }
+  .msg-row.agent .bubble{
+    background:var(--white);
+    border:1px solid var(--line);
+    border-top-left-radius:4px;
+    box-shadow:var(--shadow);
+  }
+  .msg-row.user .bubble{
+    background:var(--marmalade);
+    color:var(--white);
+    border-top-right-radius:4px;
+  }
+  .msg-time{
+    font-size:10.5px;
+    color:var(--ink-soft);
+    padding:0 4px;
+  }
+
+  .pdf-chip{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    background:var(--paper-dim);
+    border:1px solid var(--line);
+    border-radius:8px;
+    padding:5px 9px;
+    font-size:12px;
+    font-weight:600;
+    color:var(--plum);
+    margin-top:6px;
+  }
+  .source-list{
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px;
+    margin-top:6px;
+  }
+  .source-chip{ margin-top:0; cursor:default; }
+  .bubble.error{
+    background:#F4E3DC !important;
+    color:#94381F !important;
+    border-color:#E8C3B4 !important;
+  }
+
+  .empty-chat{
+    margin:auto;
+    text-align:center;
+    max-width:360px;
+    color:var(--ink-soft);
+  }
+  .empty-chat-icon{ font-size:34px; margin-bottom:10px; }
+  .empty-chat-title{
+    font-family:'Baloo 2',sans-serif;
+    font-size:18px;
+    font-weight:700;
+    color:var(--ink);
+    margin-bottom:6px;
+  }
+  .empty-chat-sub{ font-size:13px; line-height:1.5; }
+
+  .typing{
+    display:flex; gap:4px; padding:14px 16px;
+  }
+  .typing span{
+    width:6px;height:6px;border-radius:50%;
+    background:var(--marmalade);
+    opacity:0.5;
+    animation:bounce 1.2s infinite;
+  }
+  .typing span:nth-child(2){ animation-delay:.15s; }
+  .typing span:nth-child(3){ animation-delay:.3s; }
+  @keyframes bounce{
+    0%,60%,100%{ transform:translateY(0); opacity:.4;}
+    30%{ transform:translateY(-4px); opacity:1;}
+  }
+
+  .composer{
+    padding:16px 10% 22px 10%;
+    background:var(--paper);
+  }
+  .composer-inner{
+    display:flex;
+    align-items:flex-end;
+    gap:10px;
+    background:var(--white);
+    border:1px solid var(--line);
+    border-radius:18px;
+    padding:8px 8px 8px 16px;
+    box-shadow:var(--shadow);
+  }
+  .composer-inner textarea{
+    flex:1;
+    border:none;
+    outline:none;
+    resize:none;
+    font-family:'Inter',sans-serif;
+    font-size:14.5px;
+    line-height:1.5;
+    max-height:120px;
+    padding:8px 0;
+    background:transparent;
+    color:var(--ink);
+  }
+  .composer-inner textarea::placeholder{ color:#B6A98F; }
+  .icon-btn{
+    width:36px;height:36px;
+    border-radius:50%;
+    border:none;
+    background:var(--paper-dim);
+    color:var(--ink-soft);
+    display:flex;align-items:center;justify-content:center;
+    cursor:pointer;
+    flex-shrink:0;
+    transition:background .15s ease;
+  }
+  .icon-btn:hover{ background:#EAE0C8; }
+  .icon-btn:disabled{ opacity:.5; cursor:default; }
+  .composer-inner textarea:disabled{ opacity:.6; }
+  .send-btn{
+    background:var(--marmalade);
+    color:var(--white);
+  }
+  .send-btn:hover{ background:var(--marmalade-dark); }
+  .composer-hint{
+    text-align:center;
+    font-size:11px;
+    color:var(--ink-soft);
+    margin-top:10px;
+  }
+
+  .empty-pdf{
+    font-size:11.5px;
+    color:var(--ink-soft);
+    padding:6px 10px 4px 10px;
+    font-style:italic;
+  }
+
+  @media (max-width:820px){
+    .sidebar{ position:absolute; z-index:5; transform:translateX(-100%); transition:transform .2s ease; }
+    .sidebar.open{ transform:translateX(0); }
+    .messages{ padding:20px 5%; }
+    .composer{ padding:14px 5% 18px 5%; }
+    .bubble-wrap{ max-width:85%; }
+  }
+</style>
+</head>
+<body>
+
+<aside class="sidebar" id="sidebar">
+  <div class="brand">
+    <svg class="brand-mark" viewBox="0 0 48 48" fill="none">
+      <path d="M12 10 L16 20 Q24 16 32 20 L36 10 Q39 16 37 24 Q40 30 36 36 Q30 41 24 41 Q18 41 12 36 Q8 30 11 24 Q9 16 12 10Z" fill="#E58B3A"/>
+      <circle cx="18" cy="26" r="2.4" fill="#2C2620"/>
+      <circle cx="30" cy="26" r="2.4" fill="#2C2620"/>
+      <path d="M22 31 Q24 33 26 31" stroke="#2C2620" stroke-width="1.6" stroke-linecap="round" fill="none"/>
+    </svg>
+    <div>
+      <div class="brand-text">Whiskers</div>
+      <div class="brand-sub">your cat agent</div>
+    </div>
+  </div>
+
+  <button class="new-chat-btn" onclick="newChat()">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="white" stroke-width="2.4" stroke-linecap="round"/></svg>
+    New chat
+  </button>
+
+  <div class="sidebar-scroll">
+    <div class="section-label">Chats</div>
+    <div id="chatList"></div>
+
+    <div class="section-row">
+      <div class="section-label">Uploaded PDFs</div>
+      <button class="refresh-btn" id="refreshBtn" title="Refresh from server" onclick="fetchPdfsFromServer()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M21 12a9 9 0 1 1-2.64-6.36M21 4v6h-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+    </div>
+    <div id="pdfList"></div>
+    <div class="pdf-status" id="pdfStatus"></div>
+    <button class="pdf-upload-btn" id="uploadBtn" onclick="document.getElementById('pdfInput').click()">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
+      Upload PDF
+    </button>
+    <input type="file" id="pdfInput" accept="application/pdf" multiple style="display:none" onchange="handlePdfUpload(event)">
+  </div>
+
+  <div class="sidebar-footer">
+    <div class="user-avatar">JD</div>
+    <div>
+      <div class="user-name">Jordan Diaz</div>
+      <div class="user-plan">Free plan</div>
+    </div>
+    <button class="settings-btn" title="Settings" onclick="openSettings()">
+      <svg width="19" height="19" viewBox="0 0 24 24" fill="none"><path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" stroke="currentColor" stroke-width="1.8"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z" stroke="currentColor" stroke-width="1.8"/></svg>
+    </button>
+  </div>
+</aside>
+
+<div class="modal-overlay" id="settingsModal">
+  <div class="modal">
+    <h3>Settings</h3>
+    <p class="sub">Configure your RAG server and manage local data.</p>
+
+    <label class="field-label" for="apiBaseInput">FastAPI server URL</label>
+    <div class="field-row">
+      <input type="text" id="apiBaseInput" class="field-input" placeholder="http://127.0.0.1:8000" oninput="onApiBaseInputChange()">
+      <button class="test-btn" id="testBtn" onclick="testConnection()">Test</button>
+    </div>
+    <div class="conn-status idle" id="connStatus">
+      <span class="conn-dot"></span><span id="connStatusText">Not tested yet</span>
+    </div>
+
+    <div class="modal-divider"></div>
+
+    <div class="danger-row">
+      <div>
+        <div style="font-weight:600; font-size:13px;">Clear chat history</div>
+        <div class="danger-text">Removes all saved chats from this browser.</div>
+      </div>
+      <button class="danger-btn" onclick="clearChatHistory()">Clear</button>
+    </div>
+
+    <div class="modal-actions">
+      <button class="modal-btn ghost" onclick="closeSettings()">Cancel</button>
+      <button class="modal-btn primary" onclick="saveSettings()">Save</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<main class="main">
+  <div class="chat-header">
+    <div class="agent-avatar">
+      <svg width="24" height="24" viewBox="0 0 48 48" fill="none">
+        <path d="M12 10 L16 20 Q24 16 32 20 L36 10 Q39 16 37 24 Q40 30 36 36 Q30 41 24 41 Q18 41 12 36 Q8 30 11 24 Q9 16 12 10Z" fill="white"/>
+        <circle cx="18" cy="26" r="2.2" fill="#C96F26"/>
+        <circle cx="30" cy="26" r="2.2" fill="#C96F26"/>
+      </svg>
+    </div>
+    <div>
+      <div class="agent-name">Whiskers</div>
+      <div class="agent-status"><span class="status-dot"></span> Online — purring along</div>
+    </div>
+  </div>
+
+  <div class="messages" id="messages"></div>
+
+  <div class="composer">
+    <div class="composer-inner">
+     
+      <textarea id="composerInput" rows="1" placeholder="Ask Whiskers anything..." onkeydown="handleKey(event)" oninput="autoGrow(this)"></textarea>
+      <button class="icon-btn send-btn" id="sendBtn" onclick="sendMessage()" title="Send">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M4 12h16M14 6l6 6-6 6" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+    </div>
+    <div class="composer-hint">Whiskers may occasionally cough up a hairball of wrong info. Verify important facts.</div>
+  </div>
+</main>
+
+<script>
+// ---------------- Config ----------------
+const STORAGE_KEY_CHATS = 'whiskers:chats';
+const STORAGE_KEY_SETTINGS = 'whiskers:settings';
+let API_BASE = 'http://localhost:8000';
+
+function makeEmptyChat(){
+  return {id: 1, title: "New conversation", preview: "Say hello to Whiskers...", active: true, messages: []};
+}
+const DEFAULT_CHATS = [makeEmptyChat()];
+
+let chats = [];
+let pdfs = [];
+
+// ---------------- Persistence (window.storage — artifact-safe, replaces localStorage) ----------------
+async function loadChats(){
+  try{
+    const result = await window.storage.get(STORAGE_KEY_CHATS, false);
+    chats = result ? JSON.parse(result.value) : [makeEmptyChat()];
+  }catch(err){
+    chats = [makeEmptyChat()];
+  }
+  if(!chats.some(c => c.active) && chats.length) chats[0].active = true;
+}
+
+async function saveChats(){
+  try{
+    await window.storage.set(STORAGE_KEY_CHATS, JSON.stringify(chats), false);
+  }catch(err){
+    console.error('Failed to save chats', err);
+  }
+}
+
+async function loadSettings(){
+  try{
+    const result = await window.storage.get(STORAGE_KEY_SETTINGS, false);
+    if(result){
+      const s = JSON.parse(result.value);
+      if(s.apiBase) API_BASE = s.apiBase;
+    }
+  }catch(err){ /* no saved settings yet */ }
+}
+
+async function saveSettingsToStorage(){
+  try{
+    await window.storage.set(STORAGE_KEY_SETTINGS, JSON.stringify({apiBase: API_BASE}), false);
+  }catch(err){
+    console.error('Failed to save settings', err);
+  }
+}
+
+// ---------------- Render ----------------
+function pawSVG(){
+  return `<svg class="paw" viewBox="0 0 24 24" fill="none">
+    <circle cx="8" cy="8" r="2.1" fill="currentColor"/>
+    <circle cx="14" cy="6.5" r="2.1" fill="currentColor"/>
+    <circle cx="18.5" cy="10" r="2" fill="currentColor"/>
+    <ellipse cx="12" cy="16" rx="5.2" ry="4.4" fill="currentColor"/>
+  </svg>`;
+}
+
+function renderChatList(){
+  const list = document.getElementById('chatList');
+  list.innerHTML = chats.map(c => `
+    <div class="chat-item ${c.active ? 'active':''}" onclick="selectChat(${c.id})">
+      <div style="color:${c.active?'#C96F26':'#6E6255'}">${pawSVG()}</div>
+      <div class="chat-meta">
+        <div class="chat-title">${escapeHtml(c.title)}</div>
+        <div class="chat-preview">${escapeHtml(c.preview)}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderPdfList(){
+  const list = document.getElementById('pdfList');
+  if(pdfs.length === 0){
+    list.innerHTML = `<div class="empty-pdf">No PDFs uploaded yet</div>`;
+    return;
+  }
+  list.innerHTML = pdfs.map(p => `
+    <div class="pdf-item" title="${escapeHtml(p.name)}">
+      <div class="pdf-icon">PDF</div>
+      <div class="pdf-meta">
+        <div class="pdf-name">${escapeHtml(p.name)}</div>
+        <div class="pdf-sub">${p.size}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderMessages(){
+  const chat = chats.find(c => c.active);
+  const box = document.getElementById('messages');
+  if(chat.messages.length === 0){
+    box.innerHTML = `<div class="empty-chat">
+      <div class="empty-chat-icon">🐾</div>
+      <div class="empty-chat-title">Ask Whiskers about your PDFs</div>
+      <div class="empty-chat-sub">Upload a document, then ask a question — answers are grounded in what's actually in your files.</div>
+    </div>`;
+    return;
+  }
+  box.innerHTML = chat.messages.map(m => `
+    <div class="msg-row ${m.role}">
+      <div class="msg-avatar ${m.role}">
+        ${m.role === 'agent' ? `<svg width="18" height="18" viewBox="0 0 48 48" fill="none"><path d="M12 10 L16 20 Q24 16 32 20 L36 10 Q39 16 37 24 Q40 30 36 36 Q30 41 24 41 Q18 41 12 36 Q8 30 11 24 Q9 16 12 10Z" fill="white"/><circle cx="18" cy="26" r="2.2" fill="#C96F26"/><circle cx="30" cy="26" r="2.2" fill="#C96F26"/></svg>` : 'JD'}
+      </div>
+      <div class="bubble-wrap">
+        <div class="bubble ${m.error ? 'error' : ''}">${escapeHtml(m.text)}</div>
+        ${m.pdf ? `<div class="pdf-chip"><svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M21 11.5V7a2 2 0 0 0-2-2h-6l-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>${escapeHtml(m.pdf)}</div>` : ''}
+        ${m.sources && m.sources.length ? `<div class="source-list">
+          ${m.sources.map(s => `<div class="pdf-chip source-chip" title="Similarity ${s.score}"><svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M21 11.5V7a2 2 0 0 0-2-2h-6l-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>${escapeHtml(s.pdf)}${s.page !== undefined ? ` · p.${escapeHtml(String(s.page))}` : ''}</div>`).join('')}
+        </div>` : ''}
+      </div>
+    </div>
+  `).join('');
+  box.scrollTop = box.scrollHeight;
+}
+
+function escapeHtml(s){
+  const d = document.createElement('div');
+  d.textContent = String(s);
+  return d.innerHTML;
+}
+
+// ---------------- Toast ----------------
+let toastTimer = null;
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2600);
+}
+
+// ---------------- Actions ----------------
+function selectChat(id){
+  chats.forEach(c => c.active = (c.id === id));
+  renderChatList();
+  renderMessages();
+}
+
+function newChat(){
+  const id = (chats.length ? Math.max(...chats.map(c=>c.id)) : 0) + 1;
+  chats.forEach(c => c.active = false);
+  chats.unshift({id, title:"New conversation", preview:"Say hello to Whiskers...", active:true, messages:[]});
+  renderChatList();
+  renderMessages();
+  saveChats();
+  document.getElementById('composerInput').focus();
+}
+
+// ---------------- Settings modal ----------------
+function setConnStatus(state, text){
+  const el = document.getElementById('connStatus');
+  el.className = `conn-status ${state}`;
+  document.getElementById('connStatusText').textContent = text;
+}
+
+function onApiBaseInputChange(){
+  setConnStatus('idle', 'Not tested yet');
+}
+
+function openSettings(){
+  document.getElementById('apiBaseInput').value = API_BASE;
+  setConnStatus('idle', 'Not tested yet');
+  document.getElementById('settingsModal').classList.add('open');
+  testConnection(); // auto-check current URL as soon as the modal opens
+}
+function closeSettings(){
+  document.getElementById('settingsModal').classList.remove('open');
+}
+
+async function testConnection(){
+  const raw = document.getElementById('apiBaseInput').value.trim();
+  if(!raw){
+    setConnStatus('error', 'Enter a server URL first');
+    return false;
+  }
+  const url = raw.replace(/\/$/, '');
+  const testBtn = document.getElementById('testBtn');
+  testBtn.disabled = true;
+  setConnStatus('testing', 'Checking connection...');
+
+  try{
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 5000);
+    const res = await fetch(`${url}/`, { signal: controller.signal });
+    clearTimeout(timeout);
+
+    if(!res.ok) throw new Error(`Server responded ${res.status}`);
+    const data = await res.json().catch(() => ({}));
+    setConnStatus('connected', `Connected — ${data.message || data.status || 'server is up'}`);
+    testBtn.disabled = false;
+    return true;
+  }catch(err){
+    const reason = err.name === 'AbortError'
+      ? 'Timed out'
+      : 'Unreachable — check the URL, that the server is running, and CORS';
+    setConnStatus('error', reason);
+    testBtn.disabled = false;
+    return false;
+  }
+}
+
+async function saveSettings(){
+  const val = document.getElementById('apiBaseInput').value.trim();
+  if(val) API_BASE = val.replace(/\/$/, '');
+  await saveSettingsToStorage();
+  const ok = await testConnection();
+  closeSettings();
+  showToast(ok ? 'Connected to server ✓' : 'Saved, but server unreachable');
+  if(ok) fetchPdfsFromServer(); // pull the current PDF list now that we're connected
+}
+async function clearChatHistory(){
+  if(!confirm('This will permanently delete all saved chats from this browser. Continue?')) return;
+  chats = [];
+  newChat(); // start fresh with one empty chat
+  await saveChats();
+  showToast('Chat history cleared');
+  closeSettings();
+}
+
+// ---------------- Server: PDFs ----------------
+async function fetchPdfsFromServer(){
+  const btn = document.getElementById('refreshBtn');
+  const status = document.getElementById('pdfStatus');
+  btn.classList.add('spinning');
+  status.textContent = '';
+  status.classList.remove('error');
+  try{
+    const res = await fetch(`${API_BASE}/pdfs`);
+    if(!res.ok) throw new Error(`Server responded ${res.status}`);
+    const data = await res.json();
+    const names = data.pdfs || [];
+    pdfs = names.map(name => ({name: typeof name === 'string' ? name : name.name, size: (typeof name === 'object' && name.size) ? name.size : ''}));
+    renderPdfList();
+    status.textContent = `Synced ${pdfs.length} PDF${pdfs.length===1?'':'s'} from server`;
+  }catch(err){
+    status.textContent = `Couldn't reach server at ${API_BASE} — check the URL in Settings and that CORS is enabled.`;
+    status.classList.add('error');
+  }finally{
+    btn.classList.remove('spinning');
+  }
+}
+
+async function uploadPdfToServer(file){
+  const formData = new FormData();
+  formData.append('file', file);
+  const res = await fetch(`${API_BASE}/upload`, {
+    method: 'POST',
+    body: formData
+  });
+  if(!res.ok){
+    const text = await res.text().catch(() => '');
+    throw new Error(text || `Upload failed (${res.status})`);
+  }
+  return res.json();
+}
+
+function autoGrow(el){
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+}
+
+function handleKey(e){
+  if(e.key === 'Enter' && !e.shiftKey){
+    e.preventDefault();
+    sendMessage();
+  }
+}
+
+async function callChatAPI(query){
+  const url = `${API_BASE}/chat?query=${encodeURIComponent(query)}`;
+  const res = await fetch(url, { method: 'POST' });
+  if(!res.ok){
+    let detail = '';
+    try{ detail = (await res.json()).detail; }catch(e){}
+    throw new Error(detail || `Server responded ${res.status}`);
+  }
+  return res.json();
+}
+
+async function sendMessage(){
+  const input = document.getElementById('composerInput');
+  const text = input.value.trim();
+  if(!text) return;
+
+  const sendBtn = document.getElementById('sendBtn');
+  const chat = chats.find(c => c.active);
+  chat.messages.push({role:'user', text});
+  if(chat.messages.filter(m => m.role === 'user').length === 1){
+    chat.title = text.slice(0,32) + (text.length>32?'…':'');
+  }
+  chat.preview = text.slice(0,40);
+  input.value = '';
+  autoGrow(input);
+  input.disabled = true;
+  sendBtn.disabled = true;
+  renderChatList();
+  renderMessages();
+  saveChats();
+
+  // typing indicator
+  const box = document.getElementById('messages');
+  const typingRow = document.createElement('div');
+  typingRow.className = 'msg-row agent';
+  typingRow.innerHTML = `<div class="msg-avatar agent"><svg width="18" height="18" viewBox="0 0 48 48" fill="none"><path d="M12 10 L16 20 Q24 16 32 20 L36 10 Q39 16 37 24 Q40 30 36 36 Q30 41 24 41 Q18 41 12 36 Q8 30 11 24 Q9 16 12 10Z" fill="white"/><circle cx="18" cy="26" r="2.2" fill="#C96F26"/><circle cx="30" cy="26" r="2.2" fill="#C96F26"/></svg></div><div class="bubble-wrap"><div class="bubble typing"><span></span><span></span><span></span></div></div>`;
+  box.appendChild(typingRow);
+  box.scrollTop = box.scrollHeight;
+
+  try{
+    const data = await callChatAPI(text);
+    typingRow.remove();
+    chat.messages.push({
+      role: 'agent',
+      text: data.answer || "I don't know.",
+      sources: Array.isArray(data.sources) ? data.sources : []
+    });
+  }catch(err){
+    typingRow.remove();
+    chat.messages.push({
+      role: 'agent',
+      error: true,
+      text: `Couldn't reach Whiskers' brain at ${API_BASE} — ${err.message}. Check the server URL in Settings.`
+    });
+  }finally{
+    input.disabled = false;
+    sendBtn.disabled = false;
+    renderMessages();
+    saveChats();
+    input.focus();
+  }
+}
+
+async function handlePdfUpload(e){
+  const files = Array.from(e.target.files);
+  if(files.length === 0) return;
+
+  const uploadBtn = document.getElementById('uploadBtn');
+  const status = document.getElementById('pdfStatus');
+  const chat = chats.find(c => c.active);
+
+  uploadBtn.disabled = true;
+  uploadBtn.textContent = 'Uploading...';
+
+  for(const f of files){
+    status.textContent = `Uploading ${f.name}...`;
+    status.classList.remove('error');
+    try{
+      await uploadPdfToServer(f);
+      chat.messages.push({role:'user', text:`Uploaded ${f.name}`, pdf:f.name});
+      chat.preview = `Uploaded ${f.name}`;
+      renderMessages();
+      showToast(`${f.name} uploaded`);
+    }catch(err){
+      status.textContent = `Failed to upload ${f.name}: ${err.message}`;
+      status.classList.add('error');
+      showToast(`Upload failed: ${f.name}`);
+    }
+  }
+
+  uploadBtn.disabled = false;
+  uploadBtn.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg> Upload PDF`;
+
+  await saveChats();
+  // pull the authoritative list back from the server after upload(s)
+  await fetchPdfsFromServer();
+  e.target.value = '';
+}
+
+// ---------------- Init ----------------
+async function init(){
+  await loadSettings();
+  await loadChats();
+  renderChatList();
+  renderPdfList();
+  renderMessages();
+  fetchPdfsFromServer(); // initial sync from FastAPI server
+}
+init();
+</script>
+</body>
+</html>

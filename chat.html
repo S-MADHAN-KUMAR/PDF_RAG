@@ -734,9 +734,9 @@
   </div>
 
   <div class="sidebar-footer">
-    <div class="user-avatar">JD</div>
+    <div class="user-avatar" id="sidebarUserAvatar">JD</div>
     <div>
-      <div class="user-name">Jordan Diaz</div>
+      <div class="user-name" id="sidebarUserName">Jordan Diaz</div>
       <div class="user-plan">Free plan</div>
     </div>
     <button class="settings-btn" title="Settings" onclick="openSettings()">
@@ -760,6 +760,9 @@
     </div>
 
     <div class="modal-divider"></div>
+
+    <label class="field-label" for="userNameInput">Display name</label>
+    <input type="text" id="userNameInput" class="field-input" placeholder="Jordan Diaz" oninput="onUserNameInputChange()">
 
     <div class="danger-row">
       <div>
@@ -812,6 +815,7 @@
 const STORAGE_KEY_CHATS = 'whiskers:chats';
 const STORAGE_KEY_SETTINGS = 'whiskers:settings';
 let API_BASE = 'http://localhost:8000';
+let USER_NAME = 'Jordan Diaz';
 
 function makeEmptyChat(){
   return {id: 1, title: "New conversation", preview: "Say hello to Whiskers...", active: true, messages: []};
@@ -822,10 +826,38 @@ let chats = [];
 let pdfs = [];
 
 // ---------------- Persistence (window.storage — artifact-safe, replaces localStorage) ----------------
+async function persistentGet(key){
+  try{
+    const result = await window.storage.get(key, false);
+    if(result == null) return null;
+    if(typeof result === 'string') return result;
+    if(typeof result.value === 'string') return result.value;
+    return JSON.stringify(result.value || result);
+  }catch(err){
+    try{
+      return localStorage.getItem(key);
+    }catch(_){
+      return null;
+    }
+  }
+}
+
+async function persistentSet(key, value){
+  try{
+    await window.storage.set(key, value, false);
+  }catch(err){
+    try{
+      localStorage.setItem(key, value);
+    }catch(_){
+      console.error('Failed to save persistent data', err);
+    }
+  }
+}
+
 async function loadChats(){
   try{
-    const result = await window.storage.get(STORAGE_KEY_CHATS, false);
-    chats = result ? JSON.parse(result.value) : [makeEmptyChat()];
+    const raw = await persistentGet(STORAGE_KEY_CHATS);
+    chats = raw ? JSON.parse(raw) : [makeEmptyChat()];
   }catch(err){
     chats = [makeEmptyChat()];
   }
@@ -834,7 +866,7 @@ async function loadChats(){
 
 async function saveChats(){
   try{
-    await window.storage.set(STORAGE_KEY_CHATS, JSON.stringify(chats), false);
+    await persistentSet(STORAGE_KEY_CHATS, JSON.stringify(chats));
   }catch(err){
     console.error('Failed to save chats', err);
   }
@@ -842,17 +874,18 @@ async function saveChats(){
 
 async function loadSettings(){
   try{
-    const result = await window.storage.get(STORAGE_KEY_SETTINGS, false);
-    if(result){
-      const s = JSON.parse(result.value);
+    const raw = await persistentGet(STORAGE_KEY_SETTINGS);
+    if(raw){
+      const s = JSON.parse(raw);
       if(s.apiBase) API_BASE = s.apiBase;
+      if(s.userName) USER_NAME = s.userName;
     }
   }catch(err){ /* no saved settings yet */ }
 }
 
 async function saveSettingsToStorage(){
   try{
-    await window.storage.set(STORAGE_KEY_SETTINGS, JSON.stringify({apiBase: API_BASE}), false);
+    await persistentSet(STORAGE_KEY_SETTINGS, JSON.stringify({apiBase: API_BASE, userName: USER_NAME}));
   }catch(err){
     console.error('Failed to save settings', err);
   }
@@ -1092,8 +1125,13 @@ function onApiBaseInputChange(){
   setConnStatus('idle', 'Not tested yet');
 }
 
+function onUserNameInputChange(){
+  // No immediate action needed; the name is saved when the settings modal is saved.
+}
+
 function openSettings(){
   document.getElementById('apiBaseInput').value = API_BASE;
+  document.getElementById('userNameInput').value = USER_NAME;
   setConnStatus('idle', 'Not tested yet');
   document.getElementById('settingsModal').classList.add('open');
   testConnection(); // auto-check current URL as soon as the modal opens
@@ -1134,10 +1172,23 @@ async function testConnection(){
   }
 }
 
+function updateUserNameUI(){
+  const nameEl = document.getElementById('sidebarUserName');
+  if(nameEl) nameEl.textContent = USER_NAME;
+  const avatarEl = document.getElementById('sidebarUserAvatar');
+  if(avatarEl){
+    const initials = USER_NAME.trim().split(/\s+/).slice(0,2).map(part => part[0].toUpperCase()).join('');
+    avatarEl.textContent = initials || 'JD';
+  }
+}
+
 async function saveSettings(){
   const val = document.getElementById('apiBaseInput').value.trim();
   if(val) API_BASE = val.replace(/\/$/, '');
+  const nameVal = document.getElementById('userNameInput').value.trim();
+  if(nameVal) USER_NAME = nameVal;
   await saveSettingsToStorage();
+  updateUserNameUI();
   const ok = await testConnection();
   closeSettings();
   showToast(ok ? 'Connected to server ✓' : 'Saved, but server unreachable');
@@ -1303,6 +1354,7 @@ async function handlePdfUpload(e){
 // ---------------- Init ----------------
 async function init(){
   await loadSettings();
+  updateUserNameUI();
   await loadChats();
   renderChatList();
   renderPdfList();

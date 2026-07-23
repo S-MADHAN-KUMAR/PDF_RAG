@@ -1,12 +1,24 @@
+import io
 from pathlib import Path
 from pypdf import PdfReader
 
 
 class PDFExtractor:
 
-    def extract(self, pdf_path: str):
+    def extract(self, pdf_source):
+        """
+        Extract text per page from a PDF.
 
-        reader = PdfReader(pdf_path)
+        `pdf_source` can be:
+          - raw bytes / bytearray (e.g. read straight from an upload, no disk write)
+          - a file-like object (BytesIO, SpooledTemporaryFile, etc.)
+          - a path (str or Path) to a PDF already on disk
+        """
+
+        if isinstance(pdf_source, (bytes, bytearray)):
+            pdf_source = io.BytesIO(pdf_source)
+
+        reader = PdfReader(pdf_source)
 
         pages = []
 

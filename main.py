@@ -46,13 +46,6 @@ app.add_middleware(
 )
 
 # ==========================================================
-# Folder
-# ==========================================================
-
-PDF_FOLDER = Path("pdfs")
-PDF_FOLDER.mkdir(exist_ok=True)
-
-# ==========================================================
 # Initialize Services
 # ==========================================================
 
@@ -104,14 +97,13 @@ async def upload_pdf(file: UploadFile = File(...)):
             detail="Only PDF files are allowed."
         )
 
-    pdf_path = PDF_FOLDER / file.filename
+    pdf_name = Path(file.filename).stem
 
-    logger.info("Saving PDF -> %s", pdf_path)
+    logger.info("Reading PDF into memory: %s", file.filename)
 
-    with open(pdf_path, "wb") as buffer:
-        shutil.copyfileobj(file.file, buffer)
+    pdf_bytes = await file.read()
 
-    logger.info("PDF saved successfully.")
+    logger.info("Read %d bytes.", len(pdf_bytes))
 
     # ------------------------------------------------------
     # Extract
@@ -119,7 +111,7 @@ async def upload_pdf(file: UploadFile = File(...)):
 
     logger.info("Extracting PDF...")
 
-    pages = extractor.extract(str(pdf_path))
+    pages = extractor.extract(pdf_bytes)
 
     logger.info("Extracted %s pages.", len(pages))
 
@@ -166,7 +158,7 @@ async def upload_pdf(file: UploadFile = File(...)):
     logger.info("Uploading vectors to Pinecone...")
 
     vectordb.upsert_chunks(
-        pdf_name=pdf_path.stem,
+        pdf_name=pdf_name,
         chunks=chunks,
         embeddings=embeddings,
     )

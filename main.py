@@ -196,17 +196,6 @@ async def get_uploaded_pdfs():
 
 
 
-# ==========================================================
-# Chat
-# ==========================================================
- 
-# Matches below this cosine-similarity score are treated as "not relevant" —
-# tune this per your embedding model (0.3-0.4 is a reasonable starting point
-# for nemotron-3-embed on short policy-doc chunks; raise it if you still see
-# irrelevant matches, lower it if real answers get filtered out).
-RELEVANCE_THRESHOLD = 0.35
- 
- 
 @app.post("/chat")
 async def chat(query: str):
  
@@ -238,24 +227,35 @@ async def chat(query: str):
  
     logger.info("Retrieved %s documents.", len(matches))
  
+    for m in matches:
+        logger.info(
+            "  score=%.4f  pdf=%s  page=%s",
+            m["score"],
+            m.get("metadata", {}).get("pdf"),
+            m.get("metadata", {}).get("page"),
+        )
+ 
     # ------------------------------------------------------
-    # Filter out irrelevant matches (Pinecone always returns *something*,
-    # even for greetings like "hi" — a low score means "closest available",
-    # not "actually relevant")
+    # Use all matches from semantic search directly, no score filtering
     # ------------------------------------------------------
  
-    relevant_matches = [m for m in matches if m["score"] >= RELEVANCE_THRESHOLD]
- 
-    logger.info(
-        "%s of %s matches passed the relevance threshold (%.2f).",
-        len(relevant_matches), len(matches), RELEVANCE_THRESHOLD
-    )
+    relevant_matches = matches
  
     if len(relevant_matches) == 0:
+ 
+        logger.info("No matches at all (index may be empty) — returning PDF-only response.")
+ 
+        answer = (
+            "I'm here to answer questions only about the uploaded PDF documents "
+            "and the policies they contain. I can't respond to general conversations "
+            "or unrelated questions. Please ask a question related to the uploaded "
+            "PDF or policy document."
+        )
+ 
         return {
             "success": True,
             "question": query,
-            "answer": "Hi! Ask me anything about your uploaded documents and I'll do my best to help.",
+            "answer": answer,
             "sources": []
         }
  
@@ -300,7 +300,7 @@ You are an AI assistant.
 Answer ONLY from the given context.
  
 If the answer is not available in the context,
-say you don't know.
+respond: "I'm here to answer questions only about the uploaded PDF documents and the policies they contain. I can't respond to general conversations or unrelated questions. Please ask a question related to the uploaded PDF or policy document."
  
 Context:
  
@@ -333,13 +333,14 @@ Answer:
 # ==========================================================
 # Run
 # ==========================================================
-
+ 
 if __name__ == "__main__":
     import uvicorn
-
+ 
     uvicorn.run(
         "main:app",
         host="0.0.0.0",
         port=8000,
         reload=True,
     )
+ 

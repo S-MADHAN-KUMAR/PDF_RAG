@@ -1,3 +1,4 @@
+```python
 import logging
 import os
 import shutil
@@ -111,7 +112,14 @@ async def upload_pdf(file: UploadFile = File(...)):
 
     logger.info("Extracting PDF...")
 
-    pages = extractor.extract(pdf_bytes)
+    try:
+        pages = extractor.extract(pdf_bytes)
+    except Exception as e:
+        logger.error("Error extracting PDF: %s", str(e))
+        raise HTTPException(
+            status_code=500,
+            detail="Error extracting PDF."
+        )
 
     logger.info("Extracted %s pages.", len(pages))
 
@@ -121,7 +129,14 @@ async def upload_pdf(file: UploadFile = File(...)):
 
     logger.info("Cleaning pages...")
 
-    cleaned_pages = cleaner.clean_pages(pages)
+    try:
+        cleaned_pages = cleaner.clean_pages(pages)
+    except Exception as e:
+        logger.error("Error cleaning pages: %s", str(e))
+        raise HTTPException(
+            status_code=500,
+            detail="Error cleaning pages."
+        )
 
     logger.info("Cleaning completed.")
 
@@ -131,7 +146,14 @@ async def upload_pdf(file: UploadFile = File(...)):
 
     logger.info("Creating chunks...")
 
-    chunks = chunker.chunk_pages(cleaned_pages)
+    try:
+        chunks = chunker.chunk_pages(cleaned_pages)
+    except Exception as e:
+        logger.error("Error chunking pages: %s", str(e))
+        raise HTTPException(
+            status_code=500,
+            detail="Error chunking pages."
+        )
 
     logger.info("Created %s chunks.", len(chunks))
 
@@ -147,7 +169,14 @@ async def upload_pdf(file: UploadFile = File(...)):
 
     logger.info("Generating embeddings...")
 
-    embeddings = embedder.embed_batch(chunks)
+    try:
+        embeddings = embedder.embed_batch(chunks)
+    except Exception as e:
+        logger.error("Error generating embeddings: %s", str(e))
+        raise HTTPException(
+            status_code=500,
+            detail="Error generating embeddings."
+        )
 
     logger.info("Generated %s embeddings.", len(embeddings))
 
@@ -157,11 +186,18 @@ async def upload_pdf(file: UploadFile = File(...)):
 
     logger.info("Uploading vectors to Pinecone...")
 
-    vectordb.upsert_chunks(
-        pdf_name=pdf_name,
-        chunks=chunks,
-        embeddings=embeddings,
-    )
+    try:
+        vectordb.upsert_chunks(
+            pdf_name=pdf_name,
+            chunks=chunks,
+            embeddings=embeddings,
+        )
+    except Exception as e:
+        logger.error("Error uploading vectors to Pinecone: %s", str(e))
+        raise HTTPException(
+            status_code=500,
+            detail="Error uploading vectors to Pinecone."
+        )
 
     logger.info("Vectors uploaded successfully.")
 
@@ -184,7 +220,14 @@ async def get_uploaded_pdfs():
 
     logger.info("Fetching uploaded PDFs...")
 
-    pdfs = vectordb.list_pdf_names()
+    try:
+        pdfs = vectordb.list_pdf_names()
+    except Exception as e:
+        logger.error("Error fetching uploaded PDFs: %s", str(e))
+        raise HTTPException(
+            status_code=500,
+            detail="Error fetching uploaded PDFs."
+        )
 
     logger.info("Found %d PDFs.", len(pdfs))
 
@@ -208,8 +251,15 @@ async def chat(query: str):
  
     logger.info("Generating query embedding...")
  
-    query_embedding = embedder.embed_query(query)
- 
+    try:
+        query_embedding = embedder.embed_query(query)
+    except Exception as e:
+        logger.error("Error generating query embedding: %s", str(e))
+        raise HTTPException(
+            status_code=500,
+            detail="Error generating query embedding."
+        )
+
     logger.info("Embedding generated.")
  
     # ------------------------------------------------------
@@ -218,11 +268,18 @@ async def chat(query: str):
  
     logger.info("Searching Pinecone...")
  
-    results = vectordb.search(
-        embedding=query_embedding,
-        top_k=5,
-    )
- 
+    try:
+        results = vectordb.search(
+            embedding=query_embedding,
+            top_k=5,
+        )
+    except Exception as e:
+        logger.error("Error searching Pinecone: %s", str(e))
+        raise HTTPException(
+            status_code=500,
+            detail="Error searching Pinecone."
+        )
+
     matches = results.get("matches", [])
  
     logger.info("Retrieved %s documents.", len(matches))
@@ -319,8 +376,15 @@ Answer:
  
     logger.info("Calling Ollama LLM...")
  
-    answer = llm.generate(prompt)
- 
+    try:
+        answer = llm.generate(prompt)
+    except Exception as e:
+        logger.error("Error calling Ollama LLM: %s", str(e))
+        raise HTTPException(
+            status_code=500,
+            detail="Error calling Ollama LLM."
+        )
+
     logger.info("LLM response generated.")
     logger.info("=" * 70)
  
@@ -339,8 +403,4 @@ if __name__ == "__main__":
  
     uvicorn.run(
         "main:app",
-        host="0.0.0.0",
-        port=8000,
-        reload=True,
-    )
- 
+        host="

@@ -1,0 +1,6 @@
+{
+  "installCommand": "cd whiskers-nextjs-app && npm install",
+  "buildCommand": "cd whiskers-nextjs-app && npm run build",
+  "outputDirectory": "whiskers-nextjs-app/.next",
+  "devCommand": "cd whiskers-nextjs-app && npm run dev"
+}

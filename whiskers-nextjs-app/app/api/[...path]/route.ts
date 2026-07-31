@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 const FASTAPI_BASE = process.env.FASTAPI_BASE_URL || "http://127.0.0.1:8000";
 
 export async function GET(request: NextRequest, { params }: { params: { path: string[] } }) {
+  const { path } = await params; // Await params for Next.js 14.2+ compatibility
   const targetPath = `/${(params.path || []).join("/")}`;
   const url = new URL(`${FASTAPI_BASE}${targetPath}`);
   url.search = request.nextUrl.search;
@@ -18,6 +19,7 @@ export async function GET(request: NextRequest, { params }: { params: { path: st
 }
 
 export async function POST(request: NextRequest, { params }: { params: { path: string[] } }) {
+  const { path } = await params; // Await params for Next.js 14.2+ compatibility
   const targetPath = `/${(params.path || []).join("/")}`;
   const url = new URL(`${FASTAPI_BASE}${targetPath}`);
   url.search = request.nextUrl.search;

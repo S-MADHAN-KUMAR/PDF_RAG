@@ -1,5 +1,5 @@
 {
-  "installCommand": " npm ci --no-audit --no-fund",
-  "buildCommand": " npm run build",
+  "installCommand": "npm install --frozen-lockfile",
+  "buildCommand": "npm run build",
   "outputDirectory": "frontend/.next"
 }

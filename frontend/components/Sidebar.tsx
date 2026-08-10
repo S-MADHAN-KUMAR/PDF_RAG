@@ -2,7 +2,6 @@
 
 import Image from "next/image";
 import { Chat, PdfFile } from "@/types";
-import logoPng from "@/logo.png";
 import { PlusIcon, PlusIconSmall, GearIcon, PawIcon, RefreshIcon } from "./Icons";
 
 
@@ -53,7 +52,7 @@ export default function Sidebar({
     <aside className={`sidebar ${sidebarOpen ? "open" : ""}`} id="sidebar">
       <div className="brand">
         <div className="brand-mark">
-          <Image src={logoPng} alt="Whiskers logo" width={38} height={38} priority />
+          <Image src="/favicon.ico" alt="Whiskers logo" width={38} height={38} priority />
         </div>
         <div>
           <div className="brand-text">Whiskers</div>

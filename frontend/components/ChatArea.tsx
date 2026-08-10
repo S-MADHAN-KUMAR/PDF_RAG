@@ -3,7 +3,6 @@
 import Image from "next/image";
 import { useEffect, useRef } from "react";
 import { Chat } from "@/types";
-import logoPng from "@/logo.png";
 import { PdfChipIcon, SendIcon } from "./Icons";
 import { MarkdownBlock } from "@/lib/markdown";
 
@@ -52,7 +51,7 @@ export default function ChatArea({
     <main className="main">
       <div className="chat-header">
         <div className="agent-avatar">
-          <Image src={logoPng} alt="Whiskers logo" width={24} height={24} priority />
+          <Image src="/favicon.ico" alt="Whiskers logo" width={24} height={24} priority />
         </div>
         <div>
           <div className="agent-name">Whiskers</div>
@@ -78,7 +77,7 @@ export default function ChatArea({
               <div className={`msg-row ${m.role}`} key={idx}>
                 <div className={`msg-avatar ${m.role}`}>
                   {m.role === "agent" ? (
-                    <Image src={logoPng} alt="Whiskers logo" width={18} height={18} />
+                    <Image src="/favicon.ico" alt="Whiskers logo" width={18} height={18} />
                   ) : (
                     "JD"
                   )}
@@ -118,7 +117,7 @@ export default function ChatArea({
             {isSending && (
               <div className="msg-row agent">
                 <div className="msg-avatar agent">
-                  <Image src={logoPng} alt="Whiskers logo" width={18} height={18} />
+                  <Image src="/favicon.ico" alt="Whiskers logo" width={18} height={18} />
                 </div>
                 <div className="bubble-wrap">
                   <div className="bubble typing">

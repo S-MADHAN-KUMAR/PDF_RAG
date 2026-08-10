@@ -8,12 +8,12 @@ from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 
-from modules.extractor import PDFExtractor
-from modules.cleaner import TextCleaner
-from modules.chunker import TextChunker
-from modules.embedder import Embedder
-from modules.vectordb import PineconeDB
-from modules.llm import LLM
+from server.extractor import PDFExtractor
+from server.cleaner import TextCleaner
+from server.chunker import TextChunker
+from server.embedder import Embedder
+from server.vectordb import PineconeDB
+from server.llm import LLM
 
 load_dotenv()
 
